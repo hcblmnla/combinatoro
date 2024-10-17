@@ -27,3 +27,6 @@ combinatoro-*.tar
 
 # VS Code generated directory.
 /.elixir_ls/
+
+# Idea files.
+/.idea/
