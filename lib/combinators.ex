@@ -1,4 +1,9 @@
 defmodule Combinators do
+  @moduledoc """
+  Basic parser combinators.
+  Based on @kgeorgiy Clojure parser.
+  """
+
   def identity(value), do: &{:ok, value, &1}
 
   defp bitchar(predicate, code, tail) do
@@ -61,12 +66,13 @@ defmodule Combinators do
       case parser.(input) do
         {:ok, parsed, tail} ->
           case any(parser).(tail) do
+            # NOTE: extra code?
+            {:ok, [], _} -> {:ok, [parsed], tail}
             {:ok, parsed2, tail2} -> {:ok, [parsed | parsed2], tail2}
-            _ -> {:ok, [parsed], tail}
           end
 
-        err ->
-          err
+        _ ->
+          {:ok, [], input}
       end
     end
   end
@@ -84,7 +90,7 @@ defmodule Combinators do
   def ignore(parser), do: map(fn _ -> :ignore end, parser)
 
   def sequence(parsers) do
-    Enum.reduce(parsers, identity([]), fn parser, acc ->
+    Enum.reduce(Enum.reverse(parsers), identity([]), fn parser, acc ->
       concat(
         fn parser, acc ->
           if parser == :ignore do
@@ -105,7 +111,7 @@ defmodule Combinators do
 
   def choice([parser | parsers]), do: Enum.reduce(parsers, parser, &either/2)
 
-  def optional(parser), do: either(parser, identity(nil))
+  def optional(parser), do: either(parser, identity(:ignore))
 
   def many(parser), do: concat(&[&1 | &2], parser, any(parser))
 
